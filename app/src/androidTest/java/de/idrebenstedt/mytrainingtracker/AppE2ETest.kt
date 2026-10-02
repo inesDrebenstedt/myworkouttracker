@@ -14,7 +14,7 @@ class AppE2ETest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun testFullWorkoutFlow() {
+    fun testFullCreateWorkoutWithExerciseFlow() {
         // 1. Create a new exercise first
         composeTestRule.onNodeWithText("Exercises").performClick()
         composeTestRule.onNodeWithText("New exercise").performClick()
@@ -40,6 +40,7 @@ class AppE2ETest {
 
         // 4. Verify exercise is in workout and expand it
         composeTestRule.onNodeWithText("Sissy Squats").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Exercise #1").assertIsDisplayed()
         // Click the card to expand (based on the clickable ElevatedCard I added)
         composeTestRule.onNodeWithText("Sissy Squats").performClick()
 
