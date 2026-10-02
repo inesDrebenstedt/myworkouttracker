@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -69,7 +71,8 @@ private fun TrainingTrackerApp(repository: WorkoutRepository, onExit: () -> Unit
 
 @Composable
 private fun WorkoutList(workouts: List<WorkoutEntity>, repository: WorkoutRepository, onOpen: (WorkoutEntity) -> Unit) {
-    val scope = rememberCoroutineScope(); var editing by remember { mutableStateOf<WorkoutEntity?>(null) }; var adding by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope(); var editing by remember { mutableStateOf<WorkoutEntity?>(null) };
+    var adding by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Header("Workouts", "New workout") { adding = true }
         if (workouts.isEmpty()) EmptyState("No workouts yet", "Create a workout to start logging your training.") else LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 16.dp)) {
@@ -92,7 +95,6 @@ private fun WorkoutList(workouts: List<WorkoutEntity>, repository: WorkoutReposi
 
 @Composable
 private fun ExerciseList(repository: WorkoutRepository) {
-    var expanded by remember { mutableStateOf(true) }
     val exercises by repository.allExercises.collectAsState(emptyList()); val scope = rememberCoroutineScope(); var adding by remember { mutableStateOf(false) }; var editing by remember { mutableStateOf<ExerciseEntity?>(null) }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Header("Exercise library", "New exercise") { adding = true }
@@ -110,7 +112,6 @@ private fun ExerciseList(repository: WorkoutRepository) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WorkoutDetail(workout: WorkoutEntity, repository: WorkoutRepository, onBack: () -> Unit) {
-    var expanded by remember { mutableStateOf(true) }
     val rows by repository.workoutExercises(workout.id).collectAsState(emptyList()); val exercises by repository.allExercises.collectAsState(emptyList()); val scope = rememberCoroutineScope(); var addLink by remember { mutableStateOf(false) }; var createExercise by remember { mutableStateOf(false) }; var editLink by remember { mutableStateOf<WorkoutExerciseRow?>(null) }
     Scaffold(topBar = { TopAppBar(title = { Column { Text(workout.name ?: "Untitled workout"); Text(formatDate(workout.date), style = MaterialTheme.typography.labelMedium) } }, navigationIcon = { TextButton(onBack) { Text("Back") } }) }) { padding -> Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -132,28 +133,44 @@ private fun WorkoutDetail(workout: WorkoutEntity, repository: WorkoutRepository,
     editLink?.let { row -> WorkoutExerciseDialog(WorkoutExerciseEntity(row.id, row.workoutId, row.exerciseId, row.sequenceOrder), exercises, { editLink = null }) { exerciseId, order -> scope.launch { repository.updateWorkoutExercise(WorkoutExerciseEntity(row.id, row.workoutId, exerciseId, order)); editLink = null } } }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WorkoutExerciseCard(row: WorkoutExerciseRow, repository: WorkoutRepository, onEdit: () -> Unit, onDelete: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
     val sets by repository.sets(row.id).collectAsState(emptyList()); val scope = rememberCoroutineScope(); var adding by remember { mutableStateOf(false) }; var editing by remember { mutableStateOf<SetEntity?>(null) }
-    ElevatedCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(row.exerciseName, style = MaterialTheme.typography.titleLarge); Text("Exercise #${row.sequenceOrder}", style = MaterialTheme.typography.labelMedium) }; TextButton(onEdit) { Text("Edit") }; TextButton(onDelete) { Text("Delete") } }
-        Spacer(Modifier.height(8.dp)); if (sets.isEmpty()) Text("No sets logged") else {
-            Row(Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
-                Text("REPS", Modifier.weight(0.22f), style = MaterialTheme.typography.labelSmall)
-                Text("TYPE", Modifier.weight(0.38f), style = MaterialTheme.typography.labelSmall)
-                Text("WEIGHT", Modifier.weight(0.40f), style = MaterialTheme.typography.labelSmall)
+    ElevatedCard(onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp).animateContentSize()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(row.exerciseName, style = MaterialTheme.typography.titleLarge)
+                    Text("Exercise #${row.sequenceOrder}", style = MaterialTheme.typography.labelMedium)
+                }
+                TextButton(onEdit) { Text("Edit") }
+                TextButton(onDelete) { Text("Delete") }
+            }
+            AnimatedVisibility(visible = expanded) {
+                Column {
+                    Spacer(Modifier.height(8.dp))
+                    if (sets.isEmpty()) Text("No sets logged") else {
+                        Row(Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
+                            Text("REPS", Modifier.weight(0.22f), style = MaterialTheme.typography.labelSmall)
+                            Text("TYPE", Modifier.weight(0.38f), style = MaterialTheme.typography.labelSmall)
+                            Text("WEIGHT", Modifier.weight(0.40f), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    sets.forEach { set -> Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(set.repsValue, Modifier.weight(0.22f), style = MaterialTheme.typography.bodyLarge)
+                            Text(set.repsLabel?.ifBlank { "normal" } ?: "normal", Modifier.weight(0.38f), style = MaterialTheme.typography.bodyLarge)
+                            Text(set.weight?.let { "$it kg" } ?: "—", Modifier.weight(0.40f), style = MaterialTheme.typography.bodyLarge)
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton({ editing = set }) { Text("Edit") }; TextButton({ scope.launch { repository.deleteSet(set) } }) { Text("Delete") } }
+                    } }
+                    TextButton({ adding = true }, Modifier.align(Alignment.End)) { Text("+ Add set") }
+                }
             }
         }
-        sets.forEach { set -> Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(set.repsValue, Modifier.weight(0.22f), style = MaterialTheme.typography.bodyLarge)
-                Text(set.repsLabel?.ifBlank { "normal" } ?: "normal", Modifier.weight(0.38f), style = MaterialTheme.typography.bodyLarge)
-                Text(set.weight?.let { "$it kg" } ?: "—", Modifier.weight(0.40f), style = MaterialTheme.typography.bodyLarge)
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton({ editing = set }) { Text("Edit") }; TextButton({ scope.launch { repository.deleteSet(set) } }) { Text("Delete") } }
-        } }
-        TextButton({ adding = true }, Modifier.align(Alignment.End)) { Text("+ Add set") }
-    } }
+    }
     if (adding) SetDialog(onDismiss = { adding = false }) { reps, label, weight -> scope.launch { repository.insertSet(SetEntity(workoutExerciseId = row.id, repsValue = reps, repsLabel = label.ifBlank { null }, weight = weight)); adding = false } }
     editing?.let { set -> SetDialog(set, { editing = null }) { reps, label, weight -> scope.launch { repository.updateSet(set.copy(repsValue = reps, repsLabel = label.ifBlank { null }, weight = weight)); editing = null } } }
 }
