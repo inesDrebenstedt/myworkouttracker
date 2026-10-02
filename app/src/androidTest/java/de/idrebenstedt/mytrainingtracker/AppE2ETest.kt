@@ -18,10 +18,10 @@ class AppE2ETest {
         // 1. Create a new exercise first
         composeTestRule.onNodeWithText("Exercises").performClick()
         composeTestRule.onNodeWithText("New exercise").performClick()
-        composeTestRule.onNodeWithText("Exercise name").performTextInput("Squats")
+        composeTestRule.onNodeWithText("Exercise name").performTextInput("Sissy Squats")
         composeTestRule.onNodeWithText("Muscle groups (comma-separated)").performTextInput("Legs, Glutes")
         composeTestRule.onNodeWithText("Save").performClick()
-        composeTestRule.onNodeWithText("Squats").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Sissy Squats").assertIsDisplayed()
 
         // 2. Then go back to Workouts and create one
         composeTestRule.onNodeWithText("Workouts").performClick()
