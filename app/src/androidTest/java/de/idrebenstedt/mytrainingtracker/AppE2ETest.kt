@@ -1,5 +1,6 @@
 package de.idrebenstedt.mytrainingtracker
 
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,16 +16,17 @@ class AppE2ETest {
 
     @Test
     fun testFullCreateWorkoutWithExerciseFlow() {
-        // 1. Create a new exercise first
-        composeTestRule.onNodeWithText("Exercises").performClick()
+        // 1. Create a new exercise
+        // Use isSelectable() to click the navigation button specifically
+        composeTestRule.onNode(hasText("Exercises") and isSelectable()).performClick()
         composeTestRule.onNodeWithText("New exercise").performClick()
         composeTestRule.onNodeWithText("Exercise name").performTextInput("Sissy Squats")
         composeTestRule.onNodeWithText("Muscle groups (comma-separated)").performTextInput("Legs, Glutes")
         composeTestRule.onNodeWithText("Save").performClick()
         composeTestRule.onNodeWithText("Sissy Squats").assertIsDisplayed()
 
-        // 2. Then go back to Workouts and create one
-        composeTestRule.onNodeWithText("Workouts").performClick()
+        // 2. Go back to Workouts and create one
+        composeTestRule.onNode(hasText("Workouts") and isSelectable()).performClick()
         composeTestRule.onNodeWithText("New workout").performClick()
         composeTestRule.onNodeWithText("Workout name (optional)").performTextInput("Leg Day")
         composeTestRule.onNodeWithText("Save").performClick()
@@ -59,10 +61,14 @@ class AppE2ETest {
 
     @Test
     fun testTabSwitching() {
-        composeTestRule.onNodeWithText("Exercises").performClick()
-        composeTestRule.onNodeWithText("Exercise library").assertIsDisplayed()
+        // 1. Target the TAB specifically (isSelectable)
+        composeTestRule.onNode(hasText("Workouts") and isSelectable()).performClick()
 
-        composeTestRule.onNodeWithText("Workouts").performClick()
-        composeTestRule.onNodeWithText("Workouts").assertIsDisplayed()
+        // 2. Assert the HEADER is shown (not selectable)
+        composeTestRule.onNode(hasText("Workouts") and !isSelectable()).assertIsDisplayed()
+
+        // 3. Click the Exercises TAB
+        composeTestRule.onNode(hasText("Exercises") and isSelectable()).performClick()
+        composeTestRule.onNodeWithText("Exercise library").assertIsDisplayed()
     }
 }

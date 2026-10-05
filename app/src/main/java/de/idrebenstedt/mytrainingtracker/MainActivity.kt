@@ -9,6 +9,9 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -71,8 +74,7 @@ private fun TrainingTrackerApp(repository: WorkoutRepository, onExit: () -> Unit
 
 @Composable
 private fun WorkoutList(workouts: List<WorkoutEntity>, repository: WorkoutRepository, onOpen: (WorkoutEntity) -> Unit) {
-    val scope = rememberCoroutineScope(); var editing by remember { mutableStateOf<WorkoutEntity?>(null) };
-    var adding by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope(); var editing by remember { mutableStateOf<WorkoutEntity?>(null) }; var adding by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Header("Workouts", "New workout") { adding = true }
         if (workouts.isEmpty()) EmptyState("No workouts yet", "Create a workout to start logging your training.") else LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 16.dp)) {
@@ -145,6 +147,11 @@ private fun WorkoutExerciseCard(row: WorkoutExerciseRow, repository: WorkoutRepo
                     Text(row.exerciseName, style = MaterialTheme.typography.titleLarge)
                     Text("Exercise #${row.sequenceOrder}", style = MaterialTheme.typography.labelMedium)
                 }
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Collapse" else "Expand"
+                )
+                Spacer(Modifier.width(8.dp))
                 TextButton(onEdit) { Text("Edit") }
                 TextButton(onDelete) { Text("Delete") }
             }
