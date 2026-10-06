@@ -1,6 +1,5 @@
 package de.idrebenstedt.mytrainingtracker
 
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,43 +15,40 @@ class AppE2ETest {
 
     @Test
     fun testFullCreateWorkoutWithExerciseFlow() {
-        // 1. Create a new exercise
-        // Use isSelectable() to click the navigation button specifically
-        composeTestRule.onNode(hasText("Exercises") and isSelectable()).performClick()
-        composeTestRule.onNodeWithText("New exercise").performClick()
-        composeTestRule.onNodeWithText("Exercise name").performTextInput("Sissy Squats")
-        composeTestRule.onNodeWithText("Muscle groups (comma-separated)").performTextInput("Legs, Glutes")
-        composeTestRule.onNodeWithText("Save").performClick()
-        composeTestRule.onNodeWithText("Sissy Squats").assertIsDisplayed()
-
-        // 2. Go back to Workouts and create one
-        composeTestRule.onNode(hasText("Workouts") and isSelectable()).performClick()
-        composeTestRule.onNodeWithText("New workout").performClick()
-        composeTestRule.onNodeWithText("Workout name (optional)").performTextInput("Leg Day")
-        composeTestRule.onNodeWithText("Save").performClick()
-
-        // 3. Open the new workout and add the previously created exercise
-        composeTestRule.onNodeWithText("Leg Day").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Open").performClick()
-        composeTestRule.onNodeWithText("Add existing").performClick()
-        composeTestRule.onNodeWithText("Sissy Squats").performClick()
-        // The dialog has an "Order" field, default is 1.
-        composeTestRule.onNodeWithText("Order").assertTextContains("1")
-        composeTestRule.onNodeWithText("Save").performClick()
-
-        // 4. Verify exercise is in workout and expand it
-        composeTestRule.onNodeWithText("Sissy Squats").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Exercise #1").assertIsDisplayed()
-        // Click the card to expand (based on the clickable ElevatedCard I added)
-        composeTestRule.onNodeWithText("Sissy Squats").performClick()
-
-        // 5. Add a set
-        composeTestRule.onNodeWithText("+ Add set").assertIsDisplayed()
-        composeTestRule.onNodeWithText("+ Add set").performClick()
+        // 1. Create a new exercise in the library
+        composeTestRule.onNodeWithTag("ExercisesTab").performClick()
+        composeTestRule.onNodeWithTag("NewExerciselibraryButton").performClick()
+        composeTestRule.onNodeWithTag("ExerciseNameInput").performTextInput("Sissy Squats")
+        composeTestRule.onNodeWithTag("MuscleGroupsInput").performTextInput("Legs, Glutes")
+        composeTestRule.onNodeWithTag("SaveExerciseButton").performClick()
         
-        composeTestRule.onNodeWithText("Reps").performTextInput("10")
-        composeTestRule.onNodeWithText("kg").performTextInput("60")
-        composeTestRule.onNodeWithText("Save").performClick()
+        // Match unique tag - no ambiguity with shared text
+        composeTestRule.onNodeWithTag("ExerciseCard_Sissy Squats").assertIsDisplayed()
+
+        // 2. Create a new workout
+        composeTestRule.onNodeWithTag("WorkoutsTab").performClick()
+        composeTestRule.onNodeWithTag("NewWorkoutsButton").performClick()
+        composeTestRule.onNodeWithTag("WorkoutNameInput").performTextInput("Leg Day")
+        composeTestRule.onNodeWithTag("SaveWorkoutButton").performClick()
+
+        // 3. Open the workout. The unique tag WorkoutCard_Leg Day targets only the card.
+        composeTestRule.onNodeWithTag("WorkoutCard_Leg Day").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("OpenWorkout_Leg Day").performClick()
+        
+        // 4. Add the existing exercise to the workout
+        composeTestRule.onNodeWithTag("AddExistingExerciseButton").performClick()
+        composeTestRule.onNodeWithTag("ExerciseOption_Sissy Squats").performClick()
+        composeTestRule.onNodeWithTag("ExerciseOrderInput").assertTextContains("1")
+        composeTestRule.onNodeWithTag("SaveWorkoutExerciseButton").performClick()
+
+        // 5. Expand exercise and add a set
+        composeTestRule.onNodeWithTag("WorkoutExerciseCard_Sissy Squats").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("WorkoutExerciseCard_Sissy Squats").performClick()
+
+        composeTestRule.onNodeWithTag("AddSetButton").performClick()
+        composeTestRule.onNodeWithTag("RepsInput").performTextInput("10")
+        composeTestRule.onNodeWithTag("WeightInput").performTextInput("60")
+        composeTestRule.onNodeWithTag("SaveSetButton").performClick()
 
         // 6. Verify set is displayed
         composeTestRule.onNodeWithText("10").assertIsDisplayed()
@@ -61,14 +57,10 @@ class AppE2ETest {
 
     @Test
     fun testTabSwitching() {
-        // 1. Target the TAB specifically (isSelectable)
-        composeTestRule.onNode(hasText("Workouts") and isSelectable()).performClick()
+        composeTestRule.onNodeWithTag("WorkoutsTab").performClick()
+        composeTestRule.onNodeWithTag("WorkoutList").assertIsDisplayed()
 
-        // 2. Assert the HEADER is shown (not selectable)
-        composeTestRule.onNode(hasText("Workouts") and !isSelectable()).assertIsDisplayed()
-
-        // 3. Click the Exercises TAB
-        composeTestRule.onNode(hasText("Exercises") and isSelectable()).performClick()
-        composeTestRule.onNodeWithText("Exercise library").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("ExercisesTab").performClick()
+        composeTestRule.onNodeWithTag("ExerciseList").assertIsDisplayed()
     }
 }
